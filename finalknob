@@ -33,7 +33,6 @@ mouse_cap == 1 ? (
     y_delta = start_y - mouse_y;
     slider1 = start_val + (y_delta * 0.005);
     slider1 < 0 ? slider1 = 0 : slider1 > 1 ? slider1 = 1;
-    slider_chg(1);
   );
 ) : (
   is_dragging = 0;
