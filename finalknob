@@ -1,0 +1,61 @@
+desc: Custom Macro Knob Window
+version: 1.0
+author: MOG4125
+
+// 1. Create a hidden background slider to hold the value
+slider1:0<0,1,0.01>-Hidden Macro Controller
+
+@init
+// Set up graphic variables
+knob_x = 80;
+knob_y = 80;
+knob_r = 40;
+is_dragging = 0;
+
+@gfx 200 180
+// 2. Draw background panel
+gfx_r = 0.15; gfx_g = 0.15; gfx_b = 0.15; gfx_a = 1.0;
+gfx_rect(0, 0, gfx_w, gfx_h);
+
+// 3. Track Mouse clicks and drags to turn the knob
+mouse_cap == 1 ? (
+  !is_dragging ? (
+    // Check if mouse is inside the knob area
+    dx = mouse_x - knob_x;
+    dy = mouse_y - knob_y;
+    (dx*dx + dy*dy) < (knob_r*knob_r) ? is_dragging = 1;
+    start_y = mouse_y;
+    start_val = slider1;
+  );
+  
+  is_dragging ? (
+    // Turn movement into knob value adjustments
+    y_delta = start_y - mouse_y;
+    slider1 = start_val + (y_delta * 0.005);
+    slider1 < 0 ? slider1 = 0 : slider1 > 1 ? slider1 = 1;
+    slider_chg(1);
+  );
+) : (
+  is_dragging = 0;
+);
+
+// 4. Draw the 3D Vector Circular Knob Outer Ring
+gfx_r = 0.4; gfx_g = 0.4; gfx_b = 0.4; gfx_a = 1.0;
+gfx_circle(knob_x, knob_y, knob_r, 1);
+
+// Draw Knob Face
+gfx_r = 0.25; gfx_g = 0.25; gfx_b = 0.25; gfx_a = 1.0;
+gfx_circle(knob_x, knob_y, knob_r - 3, 1);
+
+// 5. Calculate and draw the pointer angle line
+angle = 0.75 * $pi + slider1 * 1.5 * $pi;
+pointer_x = knob_x + cos(angle) * (knob_r - 8);
+pointer_y = knob_y + sin(angle) * (knob_r - 8);
+
+gfx_r = 0.9; gfx_g = 0.6; gfx_b = 0.2; gfx_a = 1.0; // Orange Line
+gfx_line(knob_x, knob_y, pointer_x, pointer_y, 3);
+
+// 6. Draw clean text below the knob
+gfx_r = 0.8; gfx_g = 0.8; gfx_b = 0.8; gfx_a = 1.0;
+gfx_x = 55; gfx_y = 135;
+gfx_drawstr("MACRO CTRL");
