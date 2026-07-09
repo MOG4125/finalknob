@@ -1,26 +1,41 @@
-desc: Custom Macro Knob Window
-version: 1.0
-author: MOG4125
+desc: Advanced Customizable Macro Knob
+version: 2.0
+author: AI Assistant
 
-// 1. Create a hidden background slider to hold the value
+// Customizable controls for the user
 slider1:0<0,1,0.01>-Hidden Macro Controller
+slider2:45<20,100,1>-Knob Radius Size
+slider3:3<1,10,1>-Indicator Line Thickness
+slider4:0.9<0,1,0.01>-Indicator Color: Red
+slider5:0.6<0,1,0.01>-Indicator Color: Green
+slider6:0.2<0,1,0.01>-Indicator Color: Blue
 
 @init
-// Set up graphic variables
-knob_x = 80;
-knob_y = 80;
-knob_r = 40;
 is_dragging = 0;
 
-@gfx 200 180
-// 2. Draw background panel
-gfx_r = 0.15; gfx_g = 0.15; gfx_b = 0.15; gfx_a = 1.0;
+@sample
+// FIX: This passes the audio input directly to the output 
+// so the plugin doesn't break or mute your track's FX chain!
+spl0 = spl0;
+spl1 = spl1;
+
+@gfx 250 220
+// Read user choices from the sliders
+knob_r = slider2;
+line_w = slider3;
+line_r = slider4; line_g = slider5; line_b = slider6;
+
+// Dynamic centering based on window size
+knob_x = gfx_w / 2;
+knob_y = (gfx_h / 2) - 15;
+
+// Draw background panel
+gfx_r = 0.12; gfx_g = 0.12; gfx_b = 0.12; gfx_a = 1.0;
 gfx_rect(0, 0, gfx_w, gfx_h);
 
-// 3. Track Mouse clicks and drags to turn the knob
+// Track Mouse clicks and drags
 mouse_cap == 1 ? (
   !is_dragging ? (
-    // Check if mouse is inside the knob area
     dx = mouse_x - knob_x;
     dy = mouse_y - knob_y;
     (dx*dx + dy*dy) < (knob_r*knob_r) ? is_dragging = 1;
@@ -29,7 +44,6 @@ mouse_cap == 1 ? (
   );
   
   is_dragging ? (
-    // Turn movement into knob value adjustments
     y_delta = start_y - mouse_y;
     slider1 = start_val + (y_delta * 0.005);
     slider1 < 0 ? slider1 = 0 : slider1 > 1 ? slider1 = 1;
@@ -38,23 +52,25 @@ mouse_cap == 1 ? (
   is_dragging = 0;
 );
 
-// 4. Draw the 3D Vector Circular Knob Outer Ring
-gfx_r = 0.4; gfx_g = 0.4; gfx_b = 0.4; gfx_a = 1.0;
+// Draw Knob Outer Ring
+gfx_r = 0.35; gfx_g = 0.35; gfx_b = 0.35; gfx_a = 1.0;
 gfx_circle(knob_x, knob_y, knob_r, 1);
 
 // Draw Knob Face
-gfx_r = 0.25; gfx_g = 0.25; gfx_b = 0.25; gfx_a = 1.0;
-gfx_circle(knob_x, knob_y, knob_r - 3, 1);
+gfx_r = 0.22; gfx_g = 0.22; gfx_b = 0.22; gfx_a = 1.0;
+gfx_circle(knob_x, knob_y, knob_r - 4, 1);
 
-// 5. Calculate and draw the pointer angle line
+// Calculate and draw the pointer angle line
 angle = 0.75 * $pi + slider1 * 1.5 * $pi;
 pointer_x = knob_x + cos(angle) * (knob_r - 8);
 pointer_y = knob_y + sin(angle) * (knob_r - 8);
 
-gfx_r = 0.9; gfx_g = 0.6; gfx_b = 0.2; gfx_a = 1.0; // Orange Line
-gfx_line(knob_x, knob_y, pointer_x, pointer_y, 3);
+gfx_r = line_r; gfx_g = line_g; gfx_b = line_b; gfx_a = 1.0;
+gfx_line(knob_x, knob_y, pointer_x, pointer_y, line_w);
 
-// 6. Draw clean text below the knob
-gfx_r = 0.8; gfx_g = 0.8; gfx_b = 0.8; gfx_a = 1.0;
-gfx_x = 55; gfx_y = 135;
-gfx_drawstr("MACRO CTRL");
+// Draw dynamic text below the knob showing current value
+gfx_r = 0.7; gfx_g = 0.7; gfx_b = 0.7; gfx_a = 1.0;
+gfx_x = knob_x - 35; gfx_y = knob_y + knob_r + 15;
+gfx_drawstr("VALUE: ");
+gfx_drawnumber(slider1 * 100, 0);
+gfx_drawstr("%");
