@@ -1,6 +1,6 @@
 desc: Advanced Macro with Render Button
 version: 4.0
-author: AI Assistant
+author: MOG4125
 
 // Configuration Sliders
 slider1:0<0,1,0.01>-Macro Value Output
