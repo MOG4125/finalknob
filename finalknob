@@ -1,92 +1,56 @@
-desc: Compact Multi-Control Macro Dashboard
-version: 4.1
-author: AI Assistant
+desc: Create a inob that controls your whole FX chain in reaper and export super easily.
+version: 5.0
+author: MOG4125
 
-// Interface adjustment sliders
 slider1:0<0,1,0.01>-Macro Value Output
-slider2:0<0,2,1{Rotary Knob,Horizontal Slider,Toggle Button}>-Control Mode
-slider3:35<15,80,1>-UI Size Scaling
-slider4:3<1,8,1>-Indicator Weight
 
 @init
 is_dragging = 0;
-was_clicked = 0;
 
 @sample
 spl0 = spl0; spl1 = spl1;
 
-@gfx 220 220
-ui_mode = slider2; ui_size = slider3; line_w = slider4;
-
-// Auto-align components to fit tight windows
-center_x = gfx_w / 2;
-center_y = (gfx_h / 2) - 5;
-
-// Draw canvas background
-gfx_r = 0.12; gfx_g = 0.12; gfx_b = 0.12; gfx_a = 1.0;
+@gfx 300 250
+// 1. Force a bright background canvas
+gfx_r = 0.15; gfx_g = 0.15; gfx_b = 0.15; gfx_a = 1.0;
 gfx_rect(0, 0, gfx_w, gfx_h);
 
-// --- KNOB INTERACTION & RENDERING ---
-ui_mode == 0 ? (
-  mouse_cap == 1 ? (
-    !is_dragging ? (
-      dx = mouse_x - center_x; dy = mouse_y - center_y;
-      (dx*dx + dy*dy) < (ui_size*ui_size) ? (
-        is_dragging = 1; start_y = mouse_y; start_val = slider1;
-      );
-    );
-    is_dragging ? (
-      slider1 = start_val + ((start_y - mouse_y) * 0.008);
-      slider1 < 0 ? slider1 = 0 : slider1 > 1 ? slider1 = 1;
-    );
-  ) : is_dragging = 0;
+// 2. Lock a massive size that ignores small windows
+knob_size = 75; 
+center_x = gfx_w / 2;
+center_y = (gfx_h / 2) - 10;
 
-  // High-visibility crisp dials
-  gfx_r = 0.95; gfx_g = 0.95; gfx_b = 0.95; gfx_a = 1.0;
-  gfx_circle(center_x, center_y, ui_size, 1);
-  gfx_r = 0.20; gfx_g = 0.20; gfx_b = 0.20;
-  gfx_circle(center_x, center_y, ui_size - 4, 1);
-
-  angle = 0.75 * $pi + slider1 * 1.5 * $pi;
-  gfx_r = 0.9; gfx_g = 0.5; gfx_b = 0.1;
-  gfx_line(center_x, center_y, center_x + cos(angle)*(ui_size - 6), center_y + sin(angle)*(ui_size - 6), line_w);
-);
-
-// --- SLIDER INTERACTION & RENDERING ---
-ui_mode == 1 ? (
-  f_w = ui_size * 2.2; f_h = 18;
-  f_x = center_x - (f_w/2); f_y = center_y - (f_h/2);
-  mouse_cap == 1 ? (
-    mouse_x >= f_x && mouse_x <= (f_x+f_w) && mouse_y >= f_y && mouse_y <= (f_y+f_h) ? (
-      slider1 = (mouse_x - f_x) / f_w;
-      slider1 < 0 ? slider1 = 0 : slider1 > 1 ? slider1 = 1;
+// 3. Mouse Tracking Logic
+mouse_cap == 1 ? (
+  !is_dragging ? (
+    dx = mouse_x - center_x; dy = mouse_y - center_y;
+    (dx*dx + dy*dy) < (knob_size*knob_size) ? (
+      is_dragging = 1; start_y = mouse_y; start_val = slider1;
     );
   );
-  gfx_r = 0.25; gfx_g = 0.25; gfx_b = 0.25; gfx_rect(f_x, f_y, f_w, f_h, 1);
-  gfx_r = 0.9; gfx_g = 0.5; gfx_b = 0.1; gfx_rect(f_x, f_y, slider1 * f_w, f_h, 1);
-);
+  is_dragging ? (
+    slider1 = start_val + ((start_y - mouse_y) * 0.005);
+    slider1 < 0 ? slider1 = 0 : slider1 > 1 ? slider1 = 1;
+  );
+) : is_dragging = 0;
 
-// --- TOGGLE SWITCH INTERACTION & RENDERING ---
-ui_mode == 2 ? (
-  b_w = ui_size * 2.0; b_h = 32;
-  b_x = center_x - (b_w/2); b_y = center_y - (b_h/2);
-  mouse_cap == 1 ? (
-    !was_clicked ? (
-      mouse_x >= b_x && mouse_x <= (b_x+b_w) && mouse_y >= b_y && mouse_y <= (b_y+b_h) ? (
-        slider1 = (slider1 == 1) ? 0 : 1;
-      );
-      was_clicked = 1;
-    );
-  ) : was_clicked = 0;
-  slider1 == 1 ? (gfx_r = 0.9; gfx_g = 0.5; gfx_b = 0.1;) : (gfx_r = 0.3; gfx_g = 0.3; gfx_b = 0.3;);
-  gfx_rect(b_x, b_y, b_w, b_h, 1);
-  gfx_r = 1; gfx_g = 1; gfx_b = 1; gfx_x = center_x - 10; gfx_y = center_y - 5;
-  slider1 == 1 ? gfx_drawstr("ON") : gfx_drawstr("OFF");
-);
+// 4. DRAW THE SOLID WHITE KNOB FACE
+gfx_r = 1.0; gfx_g = 1.0; gfx_b = 1.0; gfx_a = 1.0;
+gfx_circle(center_x, center_y, knob_size, 1);
 
-// Value indicator text output
-gfx_r = 0.80; gfx_g = 0.80; gfx_b = 0.80;
-gfx_x = center_x - 30; gfx_y = gfx_h - 22;
-ui_mode != 2 ? (
-  gfx_drawstr("VAL: "); gfx_drawnumber(slider1 * 100, 0); gfx_drawstr("%");
-);
+// 5. Draw a dark center pin for high-contrast
+gfx_r = 0.2; gfx_g = 0.2; gfx_b = 0.2;
+gfx_circle(center_x, center_y, knob_size - 6, 1);
+
+// 6. Draw a thick Neon Orange Pointer line
+angle = 0.75 * $pi + slider1 * 1.5 * $pi;
+p_x = center_x + cos(angle) * (knob_size - 10);
+p_y = center_y + sin(angle) * (knob_size - 10);
+
+gfx_r = 1.0; gfx_g = 0.4; gfx_b = 0.0;
+gfx_line(center_x, center_y, p_x, p_y, 6);
+
+// 7. Value text readout
+gfx_r = 1.0; gfx_g = 1.0; gfx_b = 1.0;
+gfx_x = center_x - 30; gfx_y = gfx_h - 30;
+gfx_drawstr("VAL: "); gfx_drawnumber(slider1 * 100, 0); gfx_drawstr("%");
