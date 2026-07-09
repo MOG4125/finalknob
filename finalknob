@@ -1,76 +1,139 @@
-desc: Advanced Customizable Macro Knob
-version: 2.0
-author: AI Assistant
+desc: Advanced Multi-Control Macro
+version: 3.0
+author: MOG4125
 
-// Customizable controls for the user
-slider1:0<0,1,0.01>-Hidden Macro Controller
-slider2:45<20,100,1>-Knob Radius Size
-slider3:3<1,10,1>-Indicator Line Thickness
-slider4:0.9<0,1,0.01>-Indicator Color: Red
-slider5:0.6<0,1,0.01>-Indicator Color: Green
-slider6:0.2<0,1,0.01>-Indicator Color: Blue
+// Customizable configuration sliders
+slider1:0<0,1,0.01>-Macro Value Output
+slider2:0<0,2,1{Rotary Knob,Horizontal Slider,Toggle Button}>-Control Mode
+slider3:45<20,100,1>-UI Size (Radius/Width)
+slider4:3<1,10,1>-Indicator/Line Thickness
+slider5:0.9<0,1,0.01>-Color: Red
+slider6:0.6<0,1,0.01>-Color: Green
+slider7:0.2<0,1,0.01>-Color: Blue
 
 @init
 is_dragging = 0;
+was_clicked = 0;
 
 @sample
-// FIX: This passes the audio input directly to the output 
-// so the plugin doesn't break or mute your track's FX chain!
+// Keeps audio moving through your FX chain smoothly
 spl0 = spl0;
 spl1 = spl1;
 
-@gfx 250 220
-// Read user choices from the sliders
-knob_r = slider2;
-line_w = slider3;
-line_r = slider4; line_g = slider5; line_b = slider6;
+@gfx 300 220
+// Read configuration values
+ui_mode = slider2;
+ui_size = slider3;
+line_w  = slider4;
+c_r = slider5; c_g = slider6; c_b = slider7;
 
-// Dynamic centering based on window size
-knob_x = gfx_w / 2;
-knob_y = (gfx_h / 2) - 15;
+// Central positioning math
+center_x = gfx_w / 2;
+center_y = (gfx_h / 2) - 10;
 
-// Draw background panel
+// Draw standard background panel
 gfx_r = 0.12; gfx_g = 0.12; gfx_b = 0.12; gfx_a = 1.0;
 gfx_rect(0, 0, gfx_w, gfx_h);
 
-// Track Mouse clicks and drags
-mouse_cap == 1 ? (
-  !is_dragging ? (
-    dx = mouse_x - knob_x;
-    dy = mouse_y - knob_y;
-    (dx*dx + dy*dy) < (knob_r*knob_r) ? is_dragging = 1;
-    start_y = mouse_y;
-    start_val = slider1;
-  );
-  
-  is_dragging ? (
-    y_delta = start_y - mouse_y;
-    slider1 = start_val + (y_delta * 0.005);
-    slider1 < 0 ? slider1 = 0 : slider1 > 1 ? slider1 = 1;
-  );
-) : (
-  is_dragging = 0;
+// ---------------------------------------------
+// MODE 0: ROTARY KNOB
+// ---------------------------------------------
+ui_mode == 0 ? (
+  mouse_cap == 1 ? (
+    !is_dragging ? (
+      dx = mouse_x - center_x; dy = mouse_y - center_y;
+      (dx*dx + dy*dy) < (ui_size*ui_size) ? is_dragging = 1;
+      start_y = mouse_y; start_val = slider1;
+    );
+    is_dragging ? (
+      slider1 = start_val + ((start_y - mouse_y) * 0.005);
+      slider1 < 0 ? slider1 = 0 : slider1 > 1 ? slider1 = 1;
+    );
+  ) : is_dragging = 0;
+
+  // Draw visual circles
+  gfx_r = 0.35; gfx_g = 0.35; gfx_b = 0.35; gfx_a = 1.0;
+  gfx_circle(center_x, center_y, ui_size, 1);
+  gfx_r = 0.22; gfx_g = 0.22; gfx_b = 0.22; gfx_a = 1.0;
+  gfx_circle(center_x, center_y, ui_size - 4, 1);
+
+  // Draw angle line indicator
+  angle = 0.75 * $pi + slider1 * 1.5 * $pi;
+  p_x = center_x + cos(angle) * (ui_size - 8);
+  p_y = center_y + sin(angle) * (ui_size - 8);
+  gfx_r = c_r; gfx_g = c_g; gfx_b = c_b;
+  gfx_line(center_x, center_y, p_x, p_y, line_w);
 );
 
-// Draw Knob Outer Ring
-gfx_r = 0.35; gfx_g = 0.35; gfx_b = 0.35; gfx_a = 1.0;
-gfx_circle(knob_x, knob_y, knob_r, 1);
+// ---------------------------------------------
+// MODE 1: HORIZONTAL SLIDER
+// ---------------------------------------------
+ui_mode == 1 ? (
+  s_w = ui_size * 2; s_h = 20;
+  s_x = center_x - (s_w/2); s_y = center_y - (s_h/2);
 
-// Draw Knob Face
-gfx_r = 0.22; gfx_g = 0.22; gfx_b = 0.22; gfx_a = 1.0;
-gfx_circle(knob_x, knob_y, knob_r - 4, 1);
+  mouse_cap == 1 ? (
+    mouse_x >= s_x && mouse_x <= (s_x+s_w) && mouse_y >= s_y && mouse_y <= (s_y+s_h) ? (
+      slider1 = (mouse_x - s_x) / s_w;
+      slider1 < 0 ? slider1 = 0 : slider1 > 1 ? slider1 = 1;
+    );
+  );
 
-// Calculate and draw the pointer angle line
-angle = 0.75 * $pi + slider1 * 1.5 * $pi;
-pointer_x = knob_x + cos(angle) * (knob_r - 8);
-pointer_y = knob_y + sin(angle) * (knob_r - 8);
+  // Draw tracking bar
+  gfx_r = 0.25; gfx_g = 0.25; gfx_b = 0.25; gfx_a = 1.0;
+  gfx_rect(s_x, s_y, s_w, s_h, 1);
+  
+  // Draw filled value amount
+  gfx_r = c_r; gfx_g = c_g; gfx_b = c_b;
+  gfx_rect(s_x, s_y, slider1 * s_w, s_h, 1);
+  
+  // Draw border outline
+  gfx_r = 0.5; gfx_g = 0.5; gfx_b = 0.5;
+  gfx_rect(s_x, s_y, s_w, s_h, 0);
+);
 
-gfx_r = line_r; gfx_g = line_g; gfx_b = line_b; gfx_a = 1.0;
-gfx_line(knob_x, knob_y, pointer_x, pointer_y, line_w);
+// ---------------------------------------------
+// MODE 2: TOGGLE BUTTON
+// ---------------------------------------------
+ui_mode == 2 ? (
+  b_w = ui_size * 2; b_h = 40;
+  b_x = center_x - (b_w/2); b_y = center_y - (b_h/2);
 
-// Draw dynamic text below the knob showing current value
+  mouse_cap == 1 ? (
+    !was_clicked ? (
+      mouse_x >= b_x && mouse_x <= (b_x+b_w) && mouse_y >= b_y && mouse_y <= (b_y+b_h) ? (
+        slider1 = (slider1 == 1) ? 0 : 1;
+      );
+      was_clicked = 1;
+    );
+  ) : was_clicked = 0;
+
+  // Color changes based on ON/OFF state
+  slider1 == 1 ? (
+    gfx_r = c_r; gfx_g = c_g; gfx_b = c_b; // ON Color
+  ) : (
+    gfx_r = 0.25; gfx_g = 0.25; gfx_b = 0.25; // OFF Color
+  );
+  gfx_rect(b_x, b_y, b_w, b_h, 1);
+  
+  // Draw border outline
+  gfx_r = 0.5; gfx_g = 0.5; gfx_b = 0.5;
+  gfx_rect(b_x, b_y, b_w, b_h, 0);
+  
+  // Put text label inside button
+  gfx_r = 1; gfx_g = 1; gfx_b = 1;
+  gfx_x = center_x - 12; gfx_y = center_y - 5;
+  slider1 == 1 ? gfx_drawstr("ON") : gfx_drawstr("OFF");
+);
+
+// ---------------------------------------------
+// RENDER VALUE TEXT AT BOTTOM
+// ---------------------------------------------
 gfx_r = 0.7; gfx_g = 0.7; gfx_b = 0.7; gfx_a = 1.0;
-gfx_x = knob_x - 35; gfx_y = knob_y + knob_r + 15;
-gfx_drawstr("VALUE: ");
-gfx_drawnumber(slider1 * 100, 0);
-gfx_drawstr("%");
+gfx_x = center_x - 35; 
+gfx_y = ui_mode == 0 ? center_y + ui_size + 15 : center_y + ui_size + 5;
+ui_mode != 2 ? (
+  gfx_drawstr("VALUE: ");
+  gfx_drawnumber(slider1 * 100, 0);
+  gfx_drawstr("%");
+);
