@@ -1,5 +1,5 @@
-desc: Create a inob that controls your whole FX chain in reaper and export super easily.
-version: 5.0
+desc: Create a knob to control your whole FX rack in Reaper
+version: 6.0
 author: MOG4125
 
 slider1:0<0,1,0.01>-Macro Value Output
@@ -11,21 +11,27 @@ is_dragging = 0;
 spl0 = spl0; spl1 = spl1;
 
 @gfx 300 250
-// 1. Force a bright background canvas
-gfx_r = 0.15; gfx_g = 0.15; gfx_b = 0.15; gfx_a = 1.0;
+// 1. Clear canvas background to a deep gray
+gfx_r = 0.12; gfx_g = 0.12; gfx_b = 0.12; gfx_a = 1.0;
 gfx_rect(0, 0, gfx_w, gfx_h);
 
-// 2. Lock a massive size that ignores small windows
-knob_size = 75; 
+// 2. Lock a massive block size
+block_w = 120;
+block_h = 120;
 center_x = gfx_w / 2;
 center_y = (gfx_h / 2) - 10;
 
-// 3. Mouse Tracking Logic
+// Calculate box corner coordinates
+box_x = center_x - (block_w / 2);
+box_y = center_y - (block_h / 2);
+
+// 3. Mouse Tracking Logic (Bounding Box)
 mouse_cap == 1 ? (
   !is_dragging ? (
-    dx = mouse_x - center_x; dy = mouse_y - center_y;
-    (dx*dx + dy*dy) < (knob_size*knob_size) ? (
-      is_dragging = 1; start_y = mouse_y; start_val = slider1;
+    mouse_x >= box_x && mouse_x <= (box_x + block_w) && mouse_y >= box_y && mouse_y <= (box_y + block_h) ? (
+      is_dragging = 1; 
+      start_y = mouse_y; 
+      start_val = slider1;
     );
   );
   is_dragging ? (
@@ -34,23 +40,23 @@ mouse_cap == 1 ? (
   );
 ) : is_dragging = 0;
 
-// 4. DRAW THE SOLID WHITE KNOB FACE
+// 4. DRAW A SOLID, BRIGHT WHITE SQUARE BLOCK
 gfx_r = 1.0; gfx_g = 1.0; gfx_b = 1.0; gfx_a = 1.0;
-gfx_circle(center_x, center_y, knob_size, 1);
+gfx_rect(box_x, box_y, block_w, block_h, 1);
 
-// 5. Draw a dark center pin for high-contrast
+// 5. Draw a dark center pin box for contrast
 gfx_r = 0.2; gfx_g = 0.2; gfx_b = 0.2;
-gfx_circle(center_x, center_y, knob_size - 6, 1);
+gfx_rect(box_x + 6, box_y + 6, block_w - 12, block_h - 12, 1);
 
-// 6. Draw a thick Neon Orange Pointer line
+// 6. Draw the thick Neon Orange Pointer line from the center
 angle = 0.75 * $pi + slider1 * 1.5 * $pi;
-p_x = center_x + cos(angle) * (knob_size - 10);
-p_y = center_y + sin(angle) * (knob_size - 10);
+p_x = center_x + cos(angle) * 50;
+p_y = center_y + sin(angle) * 50;
 
 gfx_r = 1.0; gfx_g = 0.4; gfx_b = 0.0;
 gfx_line(center_x, center_y, p_x, p_y, 6);
 
-// 7. Value text readout
+// 7. Large value text readout at the bottom
 gfx_r = 1.0; gfx_g = 1.0; gfx_b = 1.0;
 gfx_x = center_x - 30; gfx_y = gfx_h - 30;
 gfx_drawstr("VAL: "); gfx_drawnumber(slider1 * 100, 0); gfx_drawstr("%");
