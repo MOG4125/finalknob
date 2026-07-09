@@ -1,102 +1,102 @@
-desc: Advanced Multi-Control Macro
-version: 3.0
-author: MOG4125
+desc: Advanced Macro with Render Button
+version: 4.0
+author: AI Assistant
 
-// Customizable configuration sliders
+// Configuration Sliders
 slider1:0<0,1,0.01>-Macro Value Output
 slider2:0<0,2,1{Rotary Knob,Horizontal Slider,Toggle Button}>-Control Mode
-slider3:45<20,100,1>-UI Size (Radius/Width)
-slider4:3<1,10,1>-Indicator/Line Thickness
-slider5:0.9<0,1,0.01>-Color: Red
-slider6:0.6<0,1,0.01>-Color: Green
-slider7:0.2<0,1,0.01>-Color: Blue
+slider3:50<20,100,1>-UI Size Multiplier
+slider4:4<1,10,1>-Indicator Line Weight
+slider5:1.0<0,1,0.01>-Theme Hue: Red
+slider6:0.3<0,1,0.01>-Theme Hue: Green
+slider7:0.1<0,1,0.01>-Theme Hue: Blue
 
 @init
 is_dragging = 0;
 was_clicked = 0;
 
 @sample
-// Keeps audio moving through your FX chain smoothly
+// Pure pass-through so audio never drops or mutes
 spl0 = spl0;
 spl1 = spl1;
 
-@gfx 300 220
-// Read configuration values
+@gfx 320 280
+// Dynamic layout properties
 ui_mode = slider2;
 ui_size = slider3;
 line_w  = slider4;
-c_r = slider5; c_g = slider6; c_b = slider7;
+t_r = slider5; t_g = slider6; t_b = slider7;
 
-// Central positioning math
 center_x = gfx_w / 2;
-center_y = (gfx_h / 2) - 10;
+center_y = (gfx_h / 2) - 20;
 
-// Draw standard background panel
-gfx_r = 0.12; gfx_g = 0.12; gfx_b = 0.12; gfx_a = 1.0;
+// Draw deep space background canvas
+gfx_r = 0.10; gfx_g = 0.10; gfx_b = 0.10; gfx_a = 1.0;
 gfx_rect(0, 0, gfx_w, gfx_h);
 
-// ---------------------------------------------
-// MODE 0: ROTARY KNOB
-// ---------------------------------------------
+// =============================================
+// MODE 0: HIGH-VISIBILITY ROTARY DIAL
+// =============================================
 ui_mode == 0 ? (
+  // Fixed tracking area calculates offsets based on window scale
   mouse_cap == 1 ? (
     !is_dragging ? (
       dx = mouse_x - center_x; dy = mouse_y - center_y;
-      (dx*dx + dy*dy) < (ui_size*ui_size) ? is_dragging = 1;
-      start_y = mouse_y; start_val = slider1;
+      (dx*dx + dy*dy) < (ui_size*ui_size) ? (
+        is_dragging = 1;
+        start_y = mouse_y;
+        start_val = slider1;
+      );
     );
     is_dragging ? (
-      slider1 = start_val + ((start_y - mouse_y) * 0.005);
+      slider1 = start_val + ((start_y - mouse_y) * 0.007);
       slider1 < 0 ? slider1 = 0 : slider1 > 1 ? slider1 = 1;
     );
   ) : is_dragging = 0;
 
-  // Draw visual circles
-  gfx_r = 0.35; gfx_g = 0.35; gfx_b = 0.35; gfx_a = 1.0;
+  // High-Contrast White Outer Ring
+  gfx_r = 0.9; gfx_g = 0.9; gfx_b = 0.9; gfx_a = 1.0;
   gfx_circle(center_x, center_y, ui_size, 1);
-  gfx_r = 0.22; gfx_g = 0.22; gfx_b = 0.22; gfx_a = 1.0;
+  
+  // Sleek Inner Core 
+  gfx_r = 0.18; gfx_g = 0.18; gfx_b = 0.18; gfx_a = 1.0;
   gfx_circle(center_x, center_y, ui_size - 4, 1);
 
-  // Draw angle line indicator
+  // Neon Pointer Line
   angle = 0.75 * $pi + slider1 * 1.5 * $pi;
-  p_x = center_x + cos(angle) * (ui_size - 8);
-  p_y = center_y + sin(angle) * (ui_size - 8);
-  gfx_r = c_r; gfx_g = c_g; gfx_b = c_b;
+  p_x = center_x + cos(angle) * (ui_size - 6);
+  p_y = center_y + sin(angle) * (ui_size - 6);
+  gfx_r = t_r; gfx_g = t_g; gfx_b = t_b;
   gfx_line(center_x, center_y, p_x, p_y, line_w);
 );
 
-// ---------------------------------------------
-// MODE 1: HORIZONTAL SLIDER
-// ---------------------------------------------
+// =============================================
+// MODE 1: HORIZONTAL FADER
+// =============================================
 ui_mode == 1 ? (
-  s_w = ui_size * 2; s_h = 20;
-  s_x = center_x - (s_w/2); s_y = center_y - (s_h/2);
+  f_w = ui_size * 2.5; f_h = 24;
+  f_x = center_x - (f_w/2); f_y = center_y - (f_h/2);
 
   mouse_cap == 1 ? (
-    mouse_x >= s_x && mouse_x <= (s_x+s_w) && mouse_y >= s_y && mouse_y <= (s_y+s_h) ? (
-      slider1 = (mouse_x - s_x) / s_w;
+    mouse_x >= f_x && mouse_x <= (f_x+f_w) && mouse_y >= f_y && mouse_y <= (f_y+f_h) ? (
+      slider1 = (mouse_x - f_x) / f_w;
       slider1 < 0 ? slider1 = 0 : slider1 > 1 ? slider1 = 1;
     );
   );
 
-  // Draw tracking bar
-  gfx_r = 0.25; gfx_g = 0.25; gfx_b = 0.25; gfx_a = 1.0;
-  gfx_rect(s_x, s_y, s_w, s_h, 1);
-  
-  // Draw filled value amount
-  gfx_r = c_r; gfx_g = c_g; gfx_b = c_b;
-  gfx_rect(s_x, s_y, slider1 * s_w, s_h, 1);
-  
-  // Draw border outline
-  gfx_r = 0.5; gfx_g = 0.5; gfx_b = 0.5;
-  gfx_rect(s_x, s_y, s_w, s_h, 0);
+  gfx_r = 0.2; gfx_g = 0.2; gfx_b = 0.2;
+  gfx_rect(f_x, f_y, f_w, f_h, 1);
+  gfx_r = t_r; gfx_g = t_g; gfx_b = t_b;
+  gfx_rect(f_x, f_y, slider1 * f_w, f_h, 1);
+  gfx_r = 0.7; gfx_g = 0.7; gfx_b = 0.7;
+  gfx_rect(f_x, f_y, f_w, f_h, 0);
 );
 
-// ---------------------------------------------
-// MODE 2: TOGGLE BUTTON
-// ---------------------------------------------
+// =============================================
+// MODE 2: ON/OFF BUTTON SWITCH
+// =============================================
 ui_mode == 2 ? (
-  b_w = ui_size * 2; b_h = 40;
+  b_w = ui_size * 2.2; b_h = 44;
   b_x = center_x - (b_w/2); b_y = center_y - (b_h/2);
 
   mouse_cap == 1 ? (
@@ -108,32 +108,54 @@ ui_mode == 2 ? (
     );
   ) : was_clicked = 0;
 
-  // Color changes based on ON/OFF state
-  slider1 == 1 ? (
-    gfx_r = c_r; gfx_g = c_g; gfx_b = c_b; // ON Color
-  ) : (
-    gfx_r = 0.25; gfx_g = 0.25; gfx_b = 0.25; // OFF Color
-  );
+  slider1 == 1 ? (gfx_r = t_r; gfx_g = t_g; gfx_b = t_b;) : (gfx_r = 0.25; gfx_g = 0.25; gfx_b = 0.25;);
   gfx_rect(b_x, b_y, b_w, b_h, 1);
-  
-  // Draw border outline
-  gfx_r = 0.5; gfx_g = 0.5; gfx_b = 0.5;
+  gfx_r = 0.6; gfx_g = 0.6; gfx_b = 0.6;
   gfx_rect(b_x, b_y, b_w, b_h, 0);
-  
-  // Put text label inside button
   gfx_r = 1; gfx_g = 1; gfx_b = 1;
-  gfx_x = center_x - 12; gfx_y = center_y - 5;
+  gfx_x = center_x - 14; gfx_y = center_y - 6;
   slider1 == 1 ? gfx_drawstr("ON") : gfx_drawstr("OFF");
 );
 
-// ---------------------------------------------
-// RENDER VALUE TEXT AT BOTTOM
-// ---------------------------------------------
-gfx_r = 0.7; gfx_g = 0.7; gfx_b = 0.7; gfx_a = 1.0;
-gfx_x = center_x - 35; 
-gfx_y = ui_mode == 0 ? center_y + ui_size + 15 : center_y + ui_size + 5;
+// =============================================
+// PRINT DATA FEEDBACK TEXT
+// =============================================
+gfx_r = 0.8; gfx_g = 0.8; gfx_b = 0.8;
+gfx_x = center_x - 38; 
+gfx_y = ui_mode == 0 ? center_y + ui_size + 14 : center_y + f_h + 10;
 ui_mode != 2 ? (
   gfx_drawstr("VALUE: ");
   gfx_drawnumber(slider1 * 100, 0);
   gfx_drawstr("%");
 );
+
+// =============================================
+// GLOBAL EXPORT SYSTEM BUTTON (BOTTOM SECTION)
+// =============================================
+btn_w = 140; btn_h = 32;
+btn_x = center_x - (btn_w / 2);
+btn_y = gfx_h - 45;
+
+// Detect mouse clicks inside the export button zone
+mouse_cap == 1 ? (
+  !export_clicked ? (
+    mouse_x >= btn_x && mouse_x <= (btn_x + btn_w) && mouse_y >= btn_y && mouse_y <= (btn_y + btn_h) ? (
+      // Trigger Reaper Command ID 40015 (File: Render project to disk...)
+      Main_OnCommand(40015, 0); 
+    );
+    export_clicked = 1;
+  );
+) : export_clicked = 0;
+
+// Draw Export Button Core
+gfx_r = 0.22; gfx_g = 0.28; gfx_b = 0.24; gfx_a = 1.0; // Cool green hue
+gfx_rect(btn_x, btn_y, btn_w, btn_h, 1);
+
+// Draw Button Border Highlight
+gfx_r = 0.40; gfx_g = 0.55; gfx_b = 0.45;
+gfx_rect(btn_x, btn_y, btn_w, btn_h, 0);
+
+// Print Text Label inside the button
+gfx_r = 0.95; gfx_g = 0.95; gfx_b = 0.95;
+gfx_x = btn_x + 24; gfx_y = btn_y + 10;
+gfx_drawstr("EXPORT MIXDOWN");
